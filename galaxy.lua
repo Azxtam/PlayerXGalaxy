@@ -91,6 +91,7 @@ local function createTabButton(name, parent, xOffset)
 end
 
 local mainTabBtn = createTabButton("Main", tabButtonsFrame, 0)
+local settingTabBtn = createTabButton("Setting", tabButtonsFrame, 110)
 
 -- Tab Content Frames
 local tabContentFrame = Instance.new("Frame", mainFrame)
@@ -103,13 +104,15 @@ roundify(tabContentFrame, 20)
 -- Main Tab Content (ScrollingFrame)
 local mainTabContent = Instance.new("ScrollingFrame", tabContentFrame)
 mainTabContent.Size = UDim2.new(1, 0, 1, 0)
-mainTabContent.CanvasSize = UDim2.new(0, 0, 0, 450)
+mainTabContent.CanvasSize = UDim2.new(0, 0, 0, 600)
 mainTabContent.ScrollBarThickness = 8
 mainTabContent.ScrollingDirection = Enum.ScrollingDirection.Y
 mainTabContent.BackgroundTransparency = 1
 mainTabContent.BorderSizePixel = 0
 mainTabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
 mainTabContent.ClipsDescendants = true
+mainTabContent.Visible = true
+roundify(mainTabContent, 20)
 
 local layout = Instance.new("UIListLayout", mainTabContent)
 layout.Padding = UDim.new(0, 10)
@@ -144,38 +147,70 @@ local function createToggleButton(parent, label, order)
 end
 
 -- Auto Seed
-local seeds = {"Sugar Apple","Ember Lily","Beanstalk","Cacao","Pepper","Mushroom","Grape"}
-local isAutoSeedOn = false
-local autoSeedCoroutine
-local function buySeedsLoop()
-    while isAutoSeedOn do
-        for _, seed in ipairs(seeds) do
-            if not isAutoSeedOn then break end
-            if BuySeedStock then BuySeedStock:FireServer(seed) end
-            wait(0.5)
+local seeds = {
+    "Sugar Apple",
+    "Ember Lily",
+    "Beanstalk",
+    "Cacao",
+    "Pepper",
+    "Mushroom",
+    "Grape",
+    "Banana",
+    "Avocado",
+    "Green Apple",
+    "Cauliflower",
+    "Loquat",
+    "Kiwi",
+    "Pineapple",
+    "Prickly pear",
+    "Bell pepper"
+}
+
+local activeSeeds = {}
+
+for i, seedName in ipairs(seeds) do
+    local toggle = createToggleButton(mainTabContent, seedName, 10 + i)
+    toggle.Text = "❌ " .. seedName .. ": OFF"
+
+    toggle.MouseButton1Click:Connect(function()
+        if activeSeeds[seedName] then
+            activeSeeds[seedName] = nil
+            toggle.Text = "❌ " .. seedName .. ": OFF"
+            toggle.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+        else
+            activeSeeds[seedName] = true
+            toggle.Text = "✅ " .. seedName .. ": ON"
+            toggle.BackgroundColor3 = Color3.fromRGB(255, 105, 180)
         end
-        wait(1)
-    end
+    end)
 end
 
-local autoSeedToggle = createToggleButton(mainTabContent, "Auto Seed 🌱", 2)
-autoSeedToggle.MouseButton1Click:Connect(function()
-    isAutoSeedOn = not isAutoSeedOn
-    if isAutoSeedOn then
-        autoSeedToggle.Text = "✅ Auto Seed 🌱: ON"
-        autoSeedToggle.BackgroundColor3 = Color3.fromRGB(255, 105, 180)
-        autoSeedCoroutine = coroutine.create(buySeedsLoop)
-        coroutine.resume(autoSeedCoroutine)
-    else
-        autoSeedToggle.Text = "❌ Auto Seed 🌱: OFF"
-        autoSeedToggle.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+task.spawn(function()
+    while true do
+        for seed, isOn in pairs(activeSeeds) do
+            if isOn and BuySeedStock then
+                BuySeedStock:FireServer(seed)
+            end
+            wait(0.3)
+        end
+        wait(1)
     end
 end)
 
 -- Auto Sprinkler
-local gears = {"Basic Sprinkler","Advanced Sprinkler","Godly Sprinkler","Lightning Rod","Master Sprinkler"}
+local gears = {
+    "Basic Sprinkler",
+    "Advanced Sprinkler",
+    "Godly Sprinkler",
+    "Lightning Rod",
+    "Master Sprinkler",
+    "Watering can",
+    "Tanning Mirror"
+}
+
 local isAutoSprinklerOn = false
 local autoSprinklerCoroutine
+
 local function buySprinklersLoop()
     while isAutoSprinklerOn do
         for _, gear in ipairs(gears) do
@@ -187,7 +222,7 @@ local function buySprinklersLoop()
     end
 end
 
-local autoSprinklerToggle = createToggleButton(mainTabContent, "Auto Sprinkler 🚿🌩️", 3)
+local autoSprinklerToggle = createToggleButton(mainTabContent, "Auto Sprinkler 🚿🌩️", 30)
 autoSprinklerToggle.MouseButton1Click:Connect(function()
     isAutoSprinklerOn = not isAutoSprinklerOn
     if isAutoSprinklerOn then
@@ -212,7 +247,7 @@ shopLabel.TextColor3 = Color3.fromRGB(140, 50, 90)
 shopLabel.TextStrokeTransparency = 0.4
 shopLabel.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
 shopLabel.TextXAlignment = Enum.TextXAlignment.Left
-shopLabel.LayoutOrder = 4
+shopLabel.LayoutOrder = 31
 
 -- ปุ่ม Seed Shop
 local seedShopBtn = Instance.new("TextButton", mainTabContent)
@@ -225,7 +260,7 @@ seedShopBtn.Font = Enum.Font.FredokaOne
 seedShopBtn.TextSize = 18
 seedShopBtn.AutoButtonColor = false
 roundify(seedShopBtn, 16)
-seedShopBtn.LayoutOrder = 5
+seedShopBtn.LayoutOrder = 32
 
 -- ปุ่ม Gear Shop
 local gearShopBtn = Instance.new("TextButton", mainTabContent)
@@ -238,9 +273,8 @@ gearShopBtn.Font = Enum.Font.FredokaOne
 gearShopBtn.TextSize = 18
 gearShopBtn.AutoButtonColor = false
 roundify(gearShopBtn, 16)
-gearShopBtn.LayoutOrder = 6
+gearShopBtn.LayoutOrder = 33
 
--- ปิด/เปิดร้านค้า
 local playerGui = player:WaitForChild("PlayerGui")
 local seedShopGui = playerGui:WaitForChild("Seed_Shop")
 local gearShopGui = playerGui:WaitForChild("Gear_Shop")
@@ -263,7 +297,7 @@ gearShopBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ปุ่มปิด UI
+-- Close button
 local closeBtn = Instance.new("TextButton", mainFrame)
 closeBtn.Size = UDim2.new(0,28,0,28)
 closeBtn.Position = UDim2.new(1,-38,0,10)
@@ -274,7 +308,9 @@ closeBtn.Font = Enum.Font.FredokaOne
 closeBtn.TextSize = 18
 closeBtn.BorderSizePixel = 0
 roundify(closeBtn, 10)
-closeBtn.MouseButton1Click:Connect(function() mainFrame.Visible = false end)
+closeBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+end)
 
 -- Tab Switching
 local function showTab(name)
@@ -283,11 +319,106 @@ local function showTab(name)
             frame.Visible = false
         end
     end
-    if name == "Main" then mainTabContent.Visible = true end
+    if name == "Main" then
+        mainTabContent.Visible = true
+    elseif name == "Setting" then
+        settingTabContent.Visible = true
+    end
 end
 
 mainTabBtn.MouseButton1Click:Connect(function() showTab("Main") end)
-toggleBtn.MouseButton1Click:Connect(function() mainFrame.Visible = not mainFrame.Visible end)
+settingTabBtn.MouseButton1Click:Connect(function() showTab("Setting") end)
+toggleBtn.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
 
--- Show default
-showTab("Main")
+-- Setting Tab Content (ScrollingFrame)
+local settingTabContent = Instance.new("ScrollingFrame", tabContentFrame)
+settingTabContent.Size = UDim2.new(1, 0, 1, 0)
+settingTabContent.CanvasSize = UDim2.new(0, 0, 0, 200)
+settingTabContent.ScrollBarThickness = 8
+settingTabContent.ScrollingDirection = Enum.ScrollingDirection.Y
+settingTabContent.BackgroundTransparency = 1
+settingTabContent.BorderSizePixel = 0
+settingTabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
+settingTabContent.ClipsDescendants = true
+settingTabContent.Visible = false
+roundify(settingTabContent, 20)
+
+-- Theme Colors Table
+local themes = {
+    Pink = {
+        MainFrame = Color3.fromRGB(255, 228, 241),
+        Header = Color3.fromRGB(255, 182, 193),
+        Button = Color3.fromRGB(255, 182, 193),
+        Text = Color3.fromRGB(140, 50, 90)
+    },
+    Blue = {
+        MainFrame = Color3.fromRGB(210, 230, 255),
+        Header = Color3.fromRGB(100, 150, 255),
+        Button = Color3.fromRGB(100, 150, 255),
+        Text = Color3.fromRGB(20, 40, 90)
+    },
+    Green = {
+        MainFrame = Color3.fromRGB(220, 255, 220),
+        Header = Color3.fromRGB(120, 200, 120),
+        Button = Color3.fromRGB(120, 200, 120),
+        Text = Color3.fromRGB(40, 80, 40)
+    },
+    Black = {
+        MainFrame = Color3.fromRGB(34, 34, 34),
+        Header = Color3.fromRGB(0, 0, 0),
+        Button = Color3.fromRGB(50, 50, 50),
+        Text = Color3.fromRGB(255, 255, 255)
+    }
+}
+
+-- Function to apply theme colors
+local function applyTheme(themeName)
+    local theme = themes[themeName]
+    if not theme then return end
+
+    mainFrame.BackgroundColor3 = theme.MainFrame
+    header.BackgroundColor3 = theme.Header
+
+    toggleBtn.BackgroundColor3 = theme.Button
+    toggleBtn.TextColor3 = theme.Text
+
+    for _, btn in ipairs(tabButtonsFrame:GetChildren()) do
+        if btn:IsA("TextButton") then
+            btn.BackgroundColor3 = theme.Button
+            btn.TextColor3 = theme.Text
+        end
+    end
+
+    for _, child in ipairs(mainTabContent:GetChildren()) do
+        if child:IsA("TextButton") then
+            child.BackgroundColor3 = theme.Button
+            child.TextColor3 = theme.Text
+        elseif child:IsA("TextLabel") then
+            child.TextColor3 = theme.Text
+        end
+    end
+
+    for _, child in ipairs(settingTabContent:GetChildren()) do
+        if child:IsA("TextButton") then
+            child.BackgroundColor3 = theme.Button
+            child.TextColor3 = theme.Text
+        elseif child:IsA("TextLabel") then
+            child.TextColor3 = theme.Text
+        end
+    end
+
+    closeBtn.BackgroundColor3 = theme.Button
+    closeBtn.TextColor3 = theme.Text
+
+    seedShopBtn.BackgroundColor3 = theme.Button
+    seedShopBtn.TextColor3 = theme.Text
+
+    gearShopBtn.BackgroundColor3 = theme.Button
+    gearShopBtn.TextColor3 = theme.Text
+end
+
+-- Setting Title
+local settingTitle = Instance.new("TextLabel", settingTabContent)
+settingTitle.Size = UDim2.new(1, 0, 0, 30
