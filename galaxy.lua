@@ -1,4 +1,4 @@
--- Player X Galaxy V1.6
+-- Player X Galaxy V1.8
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -34,12 +34,50 @@ mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
 
+-- ทำให้ mainFrame ลากขยับได้
+local draggingMain = false
+local dragInputMain
+local dragStartMain
+local startPosMain
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingMain = true
+        dragStartMain = input.Position
+        startPosMain = mainFrame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                draggingMain = false
+            end
+        end)
+    end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInputMain = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if draggingMain and input == dragInputMain then
+        local delta = input.Position - dragStartMain
+        mainFrame.Position = UDim2.new(
+            startPosMain.X.Scale,
+            startPosMain.X.Offset + delta.X,
+            startPosMain.Y.Scale,
+            startPosMain.Y.Offset + delta.Y
+        )
+    end
+end)
+
 -- Title (ชื่อ + อีโมจิ)
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Parent = mainFrame
 titleLabel.Size = UDim2.new(1, 0, 0, 40)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "🌌 Player X Galaxy V1.6"
+titleLabel.Text = "🌌 Player X Galaxy V1.8"
 titleLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextSize = 24
@@ -158,31 +196,31 @@ mainTabButton.MouseButton1Click:Connect(function()
 	mainTabFrame.Visible = true
 end)
 
--- Toggle Button (Moon Icon) พร้อมลากได้
+-- Toggle Button (Moon Icon) พร้อมลากได้ (ปุ่มเปิด/ปิด UI)
 local toggleButton = Instance.new("ImageButton")
 toggleButton.Name = "ToggleButton"
 toggleButton.Parent = playerGui
 toggleButton.Size = UDim2.new(0, 50, 0, 50)
 toggleButton.Position = UDim2.new(0, 10, 0, 10)
 toggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-toggleButton.Image = "rbxassetid://6031094663"
+toggleButton.Image = "rbxassetid://6031094663"  -- รูปดวงจันทร์
 toggleButton.ScaleType = Enum.ScaleType.Fit
 Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 12)
 
-local dragging = false
-local dragInput
-local dragStart
-local startPos
+local draggingToggle = false
+local dragInputToggle
+local dragStartToggle
+local startPosToggle
 
 toggleButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = toggleButton.Position
+        draggingToggle = true
+        dragStartToggle = input.Position
+        startPosToggle = toggleButton.Position
 
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
+                draggingToggle = false
             end
         end)
     end
@@ -190,18 +228,18 @@ end)
 
 toggleButton.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
+        dragInputToggle = input
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if dragging and input == dragInput then
-        local delta = input.Position - dragStart
+    if draggingToggle and input == dragInputToggle then
+        local delta = input.Position - dragStartToggle
         toggleButton.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
+            startPosToggle.X.Scale,
+            startPosToggle.X.Offset + delta.X,
+            startPosToggle.Y.Scale,
+            startPosToggle.Y.Offset + delta.Y
         )
     end
 end)
