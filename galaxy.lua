@@ -91,7 +91,6 @@ local function createTabButton(name, parent, xOffset)
 end
 
 local mainTabBtn = createTabButton("Main", tabButtonsFrame, 0)
-local teleportTabBtn = createTabButton("Teleport", tabButtonsFrame, 140)
 
 -- Tab Content Frames
 local tabContentFrame = Instance.new("Frame", mainFrame)
@@ -191,44 +190,80 @@ autoSprinklerToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- Teleport Tab
-local teleportTabContent = Instance.new("Frame", tabContentFrame)
-teleportTabContent.Size = UDim2.new(1,0,1,0)
-teleportTabContent.BackgroundTransparency = 1
-teleportTabContent.Visible = false
+-- Label ร้านค้า
+local shopLabel = Instance.new("TextLabel", mainTabContent)
+shopLabel.Size = UDim2.new(1, -20, 0, 30)
+shopLabel.Position = UDim2.new(0, 10, 0, 190)
+shopLabel.BackgroundTransparency = 1
+shopLabel.Text = "🛒 ร้านค้า"
+shopLabel.Font = Enum.Font.FredokaOne
+shopLabel.TextSize = 24
+shopLabel.TextColor3 = Color3.fromRGB(140, 50, 90)
+shopLabel.TextStrokeTransparency = 0.4
+shopLabel.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
+shopLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-local teleportLabel = Instance.new("TextLabel", teleportTabContent)
-teleportLabel.Size = UDim2.new(1,0,0,30)
-teleportLabel.Position = UDim2.new(0,0,0,0)
-teleportLabel.BackgroundTransparency = 1
-teleportLabel.Text = "เลือกตำแหน่งที่จะวาร์ปไป 🌍"
-teleportLabel.Font = Enum.Font.FredokaOne
-teleportLabel.TextSize = 20
-teleportLabel.TextColor3 = Color3.fromRGB(140,50,90)
-teleportLabel.TextStrokeTransparency = 0.4
-teleportLabel.TextStrokeColor3 = Color3.fromRGB(255,255,255)
+-- ปุ่ม Seed Shop
+local seedShopBtn = Instance.new("TextButton", mainTabContent)
+seedShopBtn.Size = UDim2.new(0, 180, 0, 45)
+seedShopBtn.Position = UDim2.new(0, 10, 0, 230)
+seedShopBtn.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+seedShopBtn.BorderSizePixel = 0
+seedShopBtn.Text = "เปิด Seed Shop 🌱"
+seedShopBtn.TextColor3 = Color3.fromRGB(140, 50, 90)
+seedShopBtn.Font = Enum.Font.FredokaOne
+seedShopBtn.TextSize = 20
+seedShopBtn.AutoButtonColor = false
+roundify(seedShopBtn, 18)
 
-local function createTeleportButton(name, pos, target)
-    local btn = Instance.new("TextButton", teleportTabContent)
-    btn.Size = UDim2.new(0,230,0,45)
-    btn.Position = pos
-    btn.BackgroundColor3 = Color3.fromRGB(255,182,193)
-    btn.Text = "🔄 " .. name
-    btn.Font = Enum.Font.FredokaOne
-    btn.TextSize = 18
-    btn.TextColor3 = Color3.fromRGB(140,50,90)
-    btn.BorderSizePixel = 0
-    roundify(btn, 14)
-    btn.MouseButton1Click:Connect(function()
-        local char = player.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            char:MoveTo(target)
+-- ปุ่ม Gear Shop
+local gearShopBtn = Instance.new("TextButton", mainTabContent)
+gearShopBtn.Size = UDim2.new(0, 180, 0, 45)
+gearShopBtn.Position = UDim2.new(0, 10, 0, 285)
+gearShopBtn.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
+gearShopBtn.BorderSizePixel = 0
+gearShopBtn.Text = "เปิด Gear Shop ⚙️"
+gearShopBtn.TextColor3 = Color3.fromRGB(140, 50, 90)
+gearShopBtn.Font = Enum.Font.FredokaOne
+gearShopBtn.TextSize = 20
+gearShopBtn.AutoButtonColor = false
+roundify(gearShopBtn, 18)
+
+local playerGui = player:WaitForChild("PlayerGui")
+local seedShopGui = playerGui:WaitForChild("Seed_Shop")
+local gearShopGui = playerGui:WaitForChild("Gear_Shop")
+
+-- ฟังก์ชัน Toggle เปิด/ปิด Seed Shop
+seedShopBtn.MouseButton1Click:Connect(function()
+    if seedShopGui.Enabled then
+        seedShopGui.Enabled = false
+        seedShopBtn.Text = "เปิด Seed Shop 🌱"
+    else
+        seedShopGui.Enabled = true
+        seedShopBtn.Text = "ปิด Seed Shop 🌱"
+        -- ปิด Gear Shop ถ้าเปิดอยู่
+        if gearShopGui.Enabled then
+            gearShopGui.Enabled = false
+            gearShopBtn.Text = "เปิด Gear Shop ⚙️"
         end
-    end)
-    return btn
-end
+    end
+end)
 
-createTeleportButton("ไปที่ร้าน Sprinkler", UDim2.new(0,10,0,50), Vector3.new(300,5,-120))
+-- ฟังก์ชัน Toggle เปิด/ปิด Gear Shop
+gearShopBtn.MouseButton1Click:Connect(function()
+    if gearShopGui.Enabled then
+        gearShopGui.Enabled = false
+        gearShopBtn.Text = "เปิด Gear Shop ⚙️"
+    else
+        gearShopGui.Enabled = true
+        gearShopBtn.Text = "ปิด Gear Shop ⚙️"
+        -- ปิด Seed Shop ถ้าเปิดอยู่
+        if seedShopGui.Enabled then
+            seedShopGui.Enabled = false
+            seedShopBtn.Text = "เปิด Seed Shop 🌱"
+        end
+    end
+end)
 
 -- Close Button
 local closeBtn = Instance.new("TextButton", mainFrame)
@@ -243,17 +278,15 @@ closeBtn.BorderSizePixel = 0
 roundify(closeBtn, 10)
 closeBtn.MouseButton1Click:Connect(function() mainFrame.Visible = false end)
 
--- Tab Switching
+-- Tab Switching (เฉพาะ Main)
 local function showTab(name)
     for _, frame in ipairs(tabContentFrame:GetChildren()) do
         if frame:IsA("Frame") then frame.Visible = false end
     end
-    if name == "Main" then mainTabContent.Visible = true
-    elseif name == "Teleport" then teleportTabContent.Visible = true end
+    if name == "Main" then mainTabContent.Visible = true end
 end
 
 mainTabBtn.MouseButton1Click:Connect(function() showTab("Main") end)
-teleportTabBtn.MouseButton1Click:Connect(function() showTab("Teleport") end)
 toggleBtn.MouseButton1Click:Connect(function() mainFrame.Visible = not mainFrame.Visible end)
 
 -- Show default
