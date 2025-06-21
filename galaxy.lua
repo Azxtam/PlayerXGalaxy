@@ -41,8 +41,8 @@ roundify(toggleBtn, 20)
 
 -- Main Frame
 local mainFrame = Instance.new("Frame", gui)
-mainFrame.Size = UDim2.new(0, 570, 0, 360)
-mainFrame.Position = UDim2.new(0.5, -285, 0.5, -180)
+mainFrame.Size = UDim2.new(0, 570, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -285, 0.5, -200)
 mainFrame.BackgroundColor3 = Color3.fromRGB(255, 228, 241)
 mainFrame.BorderSizePixel = 0
 mainFrame.Visible = false
@@ -100,14 +100,24 @@ tabContentFrame.BackgroundColor3 = Color3.fromRGB(255, 240, 245)
 tabContentFrame.BorderSizePixel = 0
 roundify(tabContentFrame, 20)
 
--- Main Tab Content
-local mainTabContent = Instance.new("Frame", tabContentFrame)
+-- Main Tab Content (ScrollingFrame)
+local mainTabContent = Instance.new("ScrollingFrame", tabContentFrame)
 mainTabContent.Size = UDim2.new(1, 0, 1, 0)
+mainTabContent.CanvasSize = UDim2.new(0, 0, 0, 600)
+mainTabContent.ScrollBarThickness = 8
+mainTabContent.ScrollingDirection = Enum.ScrollingDirection.Y
 mainTabContent.BackgroundTransparency = 1
+mainTabContent.BorderSizePixel = 0
+mainTabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
+mainTabContent.ClipsDescendants = true
 
+local layout = Instance.new("UIListLayout", mainTabContent)
+layout.Padding = UDim.new(0, 10)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- Main Welcome Label
 local mainLabel = Instance.new("TextLabel", mainTabContent)
 mainLabel.Size = UDim2.new(1, 0, 0, 30)
-mainLabel.Position = UDim2.new(0, 0, 0, 0)
 mainLabel.BackgroundTransparency = 1
 mainLabel.Text = "ยินดีต้อนรับสู่แท็บ Main! 💖"
 mainLabel.Font = Enum.Font.FredokaOne
@@ -115,12 +125,12 @@ mainLabel.TextSize = 20
 mainLabel.TextColor3 = Color3.fromRGB(140, 50, 90)
 mainLabel.TextStrokeTransparency = 0.4
 mainLabel.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
+mainLabel.LayoutOrder = 1
 
 -- Create Toggle Buttons Function
-local function createToggleButton(parent, posY, label)
+local function createToggleButton(parent, label, order)
     local toggle = Instance.new("TextButton", parent)
     toggle.Size = UDim2.new(0, 180, 0, 45)
-    toggle.Position = UDim2.new(0, 10, 0, posY)
     toggle.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
     toggle.BorderSizePixel = 0
     toggle.TextColor3 = Color3.fromRGB(140, 50, 90)
@@ -129,6 +139,7 @@ local function createToggleButton(parent, posY, label)
     toggle.AutoButtonColor = false
     roundify(toggle, 18)
     toggle.Text = "❌ " .. label .. ": OFF"
+    toggle.LayoutOrder = order
     return toggle
 end
 
@@ -147,7 +158,7 @@ local function buySeedsLoop()
     end
 end
 
-local autoSeedToggle = createToggleButton(mainTabContent, 60, "Auto Seed 🌱")
+local autoSeedToggle = createToggleButton(mainTabContent, "Auto Seed 🌱", 2)
 autoSeedToggle.MouseButton1Click:Connect(function()
     isAutoSeedOn = not isAutoSeedOn
     if isAutoSeedOn then
@@ -176,7 +187,7 @@ local function buySprinklersLoop()
     end
 end
 
-local autoSprinklerToggle = createToggleButton(mainTabContent, 120, "Auto Sprinkler 🚿🌩️")
+local autoSprinklerToggle = createToggleButton(mainTabContent, "Auto Sprinkler 🚿🌩️", 3)
 autoSprinklerToggle.MouseButton1Click:Connect(function()
     isAutoSprinklerOn = not isAutoSprinklerOn
     if isAutoSprinklerOn then
@@ -190,10 +201,9 @@ autoSprinklerToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- Label ร้านค้า
+-- ร้านค้า Label
 local shopLabel = Instance.new("TextLabel", mainTabContent)
 shopLabel.Size = UDim2.new(1, -20, 0, 30)
-shopLabel.Position = UDim2.new(0, 10, 0, 190)
 shopLabel.BackgroundTransparency = 1
 shopLabel.Text = "🛒 ร้านค้า"
 shopLabel.Font = Enum.Font.FredokaOne
@@ -202,11 +212,11 @@ shopLabel.TextColor3 = Color3.fromRGB(140, 50, 90)
 shopLabel.TextStrokeTransparency = 0.4
 shopLabel.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
 shopLabel.TextXAlignment = Enum.TextXAlignment.Left
+shopLabel.LayoutOrder = 4
 
 -- ปุ่ม Seed Shop
 local seedShopBtn = Instance.new("TextButton", mainTabContent)
 seedShopBtn.Size = UDim2.new(0, 180, 0, 45)
-seedShopBtn.Position = UDim2.new(0, 10, 0, 230)
 seedShopBtn.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
 seedShopBtn.BorderSizePixel = 0
 seedShopBtn.Text = "เปิด Seed Shop 🌱"
@@ -215,11 +225,11 @@ seedShopBtn.Font = Enum.Font.FredokaOne
 seedShopBtn.TextSize = 20
 seedShopBtn.AutoButtonColor = false
 roundify(seedShopBtn, 18)
+seedShopBtn.LayoutOrder = 5
 
 -- ปุ่ม Gear Shop
 local gearShopBtn = Instance.new("TextButton", mainTabContent)
 gearShopBtn.Size = UDim2.new(0, 180, 0, 45)
-gearShopBtn.Position = UDim2.new(0, 10, 0, 285)
 gearShopBtn.BackgroundColor3 = Color3.fromRGB(255, 182, 193)
 gearShopBtn.BorderSizePixel = 0
 gearShopBtn.Text = "เปิด Gear Shop ⚙️"
@@ -228,44 +238,32 @@ gearShopBtn.Font = Enum.Font.FredokaOne
 gearShopBtn.TextSize = 20
 gearShopBtn.AutoButtonColor = false
 roundify(gearShopBtn, 18)
+gearShopBtn.LayoutOrder = 6
 
+-- ปิด/เปิดร้านค้า
 local playerGui = player:WaitForChild("PlayerGui")
 local seedShopGui = playerGui:WaitForChild("Seed_Shop")
 local gearShopGui = playerGui:WaitForChild("Gear_Shop")
 
--- ฟังก์ชัน Toggle เปิด/ปิด Seed Shop
 seedShopBtn.MouseButton1Click:Connect(function()
-    if seedShopGui.Enabled then
-        seedShopGui.Enabled = false
-        seedShopBtn.Text = "เปิด Seed Shop 🌱"
-    else
-        seedShopGui.Enabled = true
-        seedShopBtn.Text = "ปิด Seed Shop 🌱"
-        -- ปิด Gear Shop ถ้าเปิดอยู่
-        if gearShopGui.Enabled then
-            gearShopGui.Enabled = false
-            gearShopBtn.Text = "เปิด Gear Shop ⚙️"
-        end
-    end
-end)
-
--- ฟังก์ชัน Toggle เปิด/ปิด Gear Shop
-gearShopBtn.MouseButton1Click:Connect(function()
-    if gearShopGui.Enabled then
+    seedShopGui.Enabled = not seedShopGui.Enabled
+    seedShopBtn.Text = seedShopGui.Enabled and "ปิด Seed Shop 🌱" or "เปิด Seed Shop 🌱"
+    if seedShopGui.Enabled and gearShopGui.Enabled then
         gearShopGui.Enabled = false
         gearShopBtn.Text = "เปิด Gear Shop ⚙️"
-    else
-        gearShopGui.Enabled = true
-        gearShopBtn.Text = "ปิด Gear Shop ⚙️"
-        -- ปิด Seed Shop ถ้าเปิดอยู่
-        if seedShopGui.Enabled then
-            seedShopGui.Enabled = false
-            seedShopBtn.Text = "เปิด Seed Shop 🌱"
-        end
     end
 end)
 
--- Close Button
+gearShopBtn.MouseButton1Click:Connect(function()
+    gearShopGui.Enabled = not gearShopGui.Enabled
+    gearShopBtn.Text = gearShopGui.Enabled and "ปิด Gear Shop ⚙️" or "เปิด Gear Shop ⚙️"
+    if gearShopGui.Enabled and seedShopGui.Enabled then
+        seedShopGui.Enabled = false
+        seedShopBtn.Text = "เปิด Seed Shop 🌱"
+    end
+end)
+
+-- ปุ่มปิด UI
 local closeBtn = Instance.new("TextButton", mainFrame)
 closeBtn.Size = UDim2.new(0,32,0,32)
 closeBtn.Position = UDim2.new(1,-42,0,10)
@@ -278,7 +276,7 @@ closeBtn.BorderSizePixel = 0
 roundify(closeBtn, 10)
 closeBtn.MouseButton1Click:Connect(function() mainFrame.Visible = false end)
 
--- Tab Switching (เฉพาะ Main)
+-- Tab Switching
 local function showTab(name)
     for _, frame in ipairs(tabContentFrame:GetChildren()) do
         if frame:IsA("Frame") then frame.Visible = false end
