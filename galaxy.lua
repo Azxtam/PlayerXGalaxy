@@ -1,184 +1,231 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
 -- Anti-AFK
 local VirtualUser = game:GetService("VirtualUser")
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-
 player.Idled:Connect(function()
     VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
     wait(1)
     VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
 end)
 
--- ตัวแปรและบริการที่ใช้
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local gameEvents = ReplicatedStorage:WaitForChild("GameEvents")
-local buyGearStock = gameEvents:WaitForChild("BuyGearStock")
-local buySeedStock = gameEvents:WaitForChild("BuySeedStock")
-
--- สร้าง ScreenGui
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-screenGui.Name = "PlayerXGalaxyUI"
+-- UI สร้างใหม่ (กะทัดรัด)
+local screenGui = Instance.new("ScreenGui", playerGui)
+screenGui.Name = "GalaxyUICompact"
 screenGui.ResetOnSpawn = false
 
--- ปุ่มเปิด/ปิด UI (เล็ก ๆ ด้านข้าง)
-local toggleButton = Instance.new("TextButton", screenGui)
-toggleButton.Size = UDim2.new(0, 40, 0, 40)
-toggleButton.Position = UDim2.new(0, 10, 0.5, -20)
-toggleButton.Text = "🛒"
-toggleButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleButton.Font = Enum.Font.GothamBold
-toggleButton.TextSize = 24
-Instance.new("UICorner", toggleButton)
-
--- หน้าต่างหลัก UI
 local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 320, 0, 160)
-mainFrame.Position = UDim2.new(0.5, -160, 0.5, -80)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mainFrame.Visible = true
+mainFrame.Position = UDim2.new(0.7, 0, 0.2, 0) -- ขยับไปมุมขวาบนเล็กน้อย
+mainFrame.Size = UDim2.new(0, 220, 0, 220) -- กะทัดรัด
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
-Instance.new("UICorner", mainFrame)
 
--- ชื่อหัวข้อใหญ่
+local uicorner = Instance.new("UICorner", mainFrame)
+uicorner.CornerRadius = UDim.new(0, 10)
+
 local title = Instance.new("TextLabel", mainFrame)
-title.Size = UDim2.new(1, 0, 0, 40)
-title.Position = UDim2.new(0, 0, 0, 0)
+title.Size = UDim2.new(1, 0, 0, 25)
 title.BackgroundTransparency = 1
-title.Text = "🚀 Galaxy Main"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Text = "🌌 PlayerXGalaxy Compact"
+title.TextColor3 = Color3.fromRGB(200, 200, 200)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 26
+title.TextSize = 16
 
--- ปุ่ม Auto Seed
-local autoSeedBtn = Instance.new("TextButton", mainFrame)
-autoSeedBtn.Size = UDim2.new(0.9, 0, 0, 45)
-autoSeedBtn.Position = UDim2.new(0.05, 0, 0, 50)
-autoSeedBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 180) -- สีฟ้า
-autoSeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-autoSeedBtn.Font = Enum.Font.GothamBold
-autoSeedBtn.TextSize = 20
-autoSeedBtn.Text = "🔁 Auto Seed [OFF]"
-Instance.new("UICorner", autoSeedBtn)
+-- ปุ่มเปิด/ปิด UI
+local toggleBtn = Instance.new("TextButton", screenGui)
+toggleBtn.Position = UDim2.new(0, 10, 0, 10) -- มุมซ้ายบน
+toggleBtn.Size = UDim2.new(0, 80, 0, 25)
+toggleBtn.Text = "Hide UI"
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 14
+toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+toggleBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+toggleBtn.AutoButtonColor = true
 
--- ปุ่ม Auto Gear
-local autoGearBtn = Instance.new("TextButton", mainFrame)
-autoGearBtn.Size = UDim2.new(0.9, 0, 0, 45)
-autoGearBtn.Position = UDim2.new(0.05, 0, 0, 105)
-autoGearBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 70) -- สีแดง
-autoGearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-autoGearBtn.Font = Enum.Font.GothamBold
-autoGearBtn.TextSize = 20
-autoGearBtn.Text = "🔁 Auto Gear [OFF]"
-Instance.new("UICorner", autoGearBtn)
+local uiVisible = true
+toggleBtn.MouseButton1Click:Connect(function()
+    uiVisible = not uiVisible
+    mainFrame.Visible = uiVisible
+    if uiVisible then
+        toggleBtn.Text = "Hide UI"
+    else
+        toggleBtn.Text = "Show UI"
+    end
+end)
 
--- ตัวแปรสถานะ Auto Seed / Gear
-local autoSeed = false
-local autoGear = false
-
--- รายการเมล็ดและเกียร์
+-- รายการข้อมูล
 local seedList = {
-    "Feijoa", "Banana", "Avocado", "Green Apple", "Watermelon",
-    "Cauliflower", "Loquat", "Prickly Pear", "Bell Pepper", "Kiwi",
-    "Pineapple", "Sugar Apple"
+    "Feijoa", "Banana", "Avocado", "Green Apple", "Watermelon", "Cauliflower",
+    "Loquat", "Prickly Pear", "Bell Pepper", "Kiwi", "Pineapple", "Sugar Apple"
 }
-
 local gearList = {
     "Watering Can", "Basic Sprinkler", "Advanced Sprinkler",
-    "Godly Sprinkler", "Tanning Mirror", "Master Sprinkler", "Friendship Pot"
+    "Master Sprinkler", "Tanning Mirror", "Godly Sprinkler"
+}
+local eggList = {
+    "Common Egg", "Uncommon Egg", "Rare Egg", "Night Egg",
+    "Rare Summer Egg", "Common Summer Egg", "Paradise Summer Egg",
+    "Legendary Egg", "Bug Egg", "Mythical Egg"
 }
 
--- สั่งซื้อเมล็ดพันธุ์แบบออโต้
-autoSeedBtn.MouseButton1Click:Connect(function()
-    autoSeed = not autoSeed
-    autoSeedBtn.Text = "🔁 Auto Seed " .. (autoSeed and "[ON]" or "[OFF]")
+local function createDropdown(parent, posY, labelText, itemList, onSelect)
+    local dropdown = Instance.new("TextButton", parent)
+    dropdown.Position = UDim2.new(0.05, 0, posY, 0)
+    dropdown.Size = UDim2.new(0.9, 0, 0, 25)
+    dropdown.Text = labelText .. ": " .. itemList[1]
+    dropdown.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    dropdown.TextColor3 = Color3.fromRGB(220, 220, 220)
+    dropdown.Font = Enum.Font.Gotham
+    dropdown.TextSize = 14
 
-    if autoSeed then
-        task.spawn(function()
-            while autoSeed do
-                for _, seedName in ipairs(seedList) do
-                    buySeedStock:FireServer(seedName)
-                    wait(1)
-                end
-                wait(5)
+    local toggle = false
+    local selectedItem = itemList[1]
+
+    dropdown.MouseButton1Click:Connect(function()
+        toggle = not toggle
+        if toggle then
+            for i, item in ipairs(itemList) do
+                local btn = Instance.new("TextButton", parent)
+                btn.Position = UDim2.new(0.05, 0, posY + (i * 0.07), 0)
+                btn.Size = UDim2.new(0.9, 0, 0, 20)
+                btn.Text = item
+                btn.Name = labelText .. "_Item_" .. i
+                btn.BackgroundColor3 = Color3.fromRGB(65, 65, 65)
+                btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+                btn.Font = Enum.Font.Gotham
+                btn.TextSize = 13
+                btn.MouseButton1Click:Connect(function()
+                    selectedItem = item
+                    dropdown.Text = labelText .. ": " .. item
+                    for _, c in ipairs(parent:GetChildren()) do
+                        if c.Name:match("^" .. labelText .. "_Item_%d+") then
+                            c:Destroy()
+                        end
+                    end
+                    toggle = false
+                    onSelect(item)
+                end)
             end
-        end)
-    end
-end)
-
--- สั่งซื้อเกียร์แบบออโต้
-autoGearBtn.MouseButton1Click:Connect(function()
-    autoGear = not autoGear
-    autoGearBtn.Text = "🔁 Auto Gear " .. (autoGear and "[ON]" or "[OFF]")
-
-    if autoGear then
-        task.spawn(function()
-            while autoGear do
-                for _, gearName in ipairs(gearList) do
-                    buyGearStock:FireServer(gearName)
-                    wait(1)
+        else
+            for _, c in ipairs(parent:GetChildren()) do
+                if c.Name:match("^" .. labelText .. "_Item_%d+") then
+                    c:Destroy()
                 end
-                wait(5)
             end
-        end)
-    end
-end)
-
--- ปุ่มเปิด/ปิด UI หลัก
-toggleButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = not mainFrame.Visible
-end)
-
--- ฟังก์ชันช่วยลาก UI รองรับเมาส์และมือถือ
-local UserInputService = game:GetService("UserInputService")
-
-local function enableDrag(guiObject)
-    local dragging
-    local dragInput
-    local dragStart
-    local startPos
-
-    local function update(input)
-        if dragging and input then
-            local delta = input.Position - dragStart
-            guiObject.Position = UDim2.new(
-                startPos.X.Scale,
-                math.clamp(startPos.X.Offset + delta.X, 0, workspace.CurrentCamera.ViewportSize.X - guiObject.AbsoluteSize.X),
-                startPos.Y.Scale,
-                math.clamp(startPos.Y.Offset + delta.Y, 0, workspace.CurrentCamera.ViewportSize.Y - guiObject.AbsoluteSize.Y)
-            )
-        end
-    end
-
-    guiObject.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or
-           input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = guiObject.Position
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
         end
     end)
 
-    guiObject.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or
-           input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput then
-            update(input)
-        end
-    end)
+    return dropdown, function() return selectedItem end
 end
 
--- เปิดระบบลากสำหรับ mainFrame และ toggleButton
-enableDrag(mainFrame)
-enableDrag(toggleButton)
+-- ตัวแปรเก็บค่าเลือก และสถานะ Auto
+local selectedSeed = seedList[1]
+local selectedGear = gearList[1]
+local selectedEgg = eggList[1]
+
+local autoSeed = false
+local autoGear = false
+local autoEgg = false
+
+-- สร้าง Dropdown
+local seedDropdown, _ = createDropdown(mainFrame, 0.12, "Seed", seedList, function(val) selectedSeed = val end)
+local gearDropdown, _ = createDropdown(mainFrame, 0.38, "Gear", gearList, function(val) selectedGear = val end)
+local eggDropdown, _ = createDropdown(mainFrame, 0.64, "Egg", eggList, function(val) selectedEgg = val end)
+
+-- ปุ่ม Auto Seed
+local seedBtn = Instance.new("TextButton", mainFrame)
+seedBtn.Position = UDim2.new(0.05, 0, 0.30, 0)
+seedBtn.Size = UDim2.new(0.9, 0, 0, 25)
+seedBtn.Text = "✅ Auto Seed OFF"
+seedBtn.Font = Enum.Font.Gotham
+seedBtn.TextSize = 14
+seedBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 40)
+seedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+seedBtn.MouseButton1Click:Connect(function()
+    autoSeed = not autoSeed
+    seedBtn.Text = autoSeed and "🛑 Auto Seed ON" or "✅ Auto Seed OFF"
+end)
+
+-- ปุ่ม Auto Gear
+local gearBtn = Instance.new("TextButton", mainFrame)
+gearBtn.Position = UDim2.new(0.05, 0, 0.56, 0)
+gearBtn.Size = UDim2.new(0.9, 0, 0, 25)
+gearBtn.Text = "✅ Auto Gear OFF"
+gearBtn.Font = Enum.Font.Gotham
+gearBtn.TextSize = 14
+gearBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 40)
+gearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+gearBtn.MouseButton1Click:Connect(function()
+    autoGear = not autoGear
+    gearBtn.Text = autoGear and "🛑 Auto Gear ON" or "✅ Auto Gear OFF"
+end)
+
+-- ปุ่ม Auto Egg
+local eggBtn = Instance.new("TextButton", mainFrame)
+eggBtn.Position = UDim2.new(0.05, 0, 0.82, 0)
+eggBtn.Size = UDim2.new(0.9, 0, 0, 25)
+eggBtn.Text = "✅ Auto Egg OFF"
+eggBtn.Font = Enum.Font.Gotham
+eggBtn.TextSize = 14
+eggBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 40)
+eggBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+eggBtn.MouseButton1Click:Connect(function()
+    autoEgg = not autoEgg
+    eggBtn.Text = autoEgg and "🛑 Auto Egg ON" or "✅ Auto Egg OFF"
+end)
+
+-- ระบบลากหน้าต่างแบบละเอียด รองรับเมาส์และมือถือ
+local dragging = false
+local dragInput, dragStart, startPos
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- Loop ซื้ออัตโนมัติ
+task.spawn(function()
+    while true do
+        if autoSeed then
+            ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("BuySeedStock"):FireServer(selectedSeed)
+        end
+        if autoGear then
+            ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("BuyGearStock"):FireServer(selectedGear)
+        end
+        if autoEgg then
+            ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("BuyEggStock"):FireServer(selectedEgg)
+        end
+        wait(1)
+    end
+end)
