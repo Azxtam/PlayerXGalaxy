@@ -1,231 +1,291 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualUser = game:GetService("VirtualUser")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Anti-AFK
-local VirtualUser = game:GetService("VirtualUser")
-player.Idled:Connect(function()
-    VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-    wait(1)
-    VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-end)
-
--- UI สร้างใหม่ (กะทัดรัด)
-local screenGui = Instance.new("ScreenGui", playerGui)
-screenGui.Name = "GalaxyUICompact"
-screenGui.ResetOnSpawn = false
-
-local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Position = UDim2.new(0.7, 0, 0.2, 0) -- ขยับไปมุมขวาบนเล็กน้อย
-mainFrame.Size = UDim2.new(0, 220, 0, 220) -- กะทัดรัด
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-mainFrame.BorderSizePixel = 0
-mainFrame.Active = true
-
-local uicorner = Instance.new("UICorner", mainFrame)
-uicorner.CornerRadius = UDim.new(0, 10)
-
-local title = Instance.new("TextLabel", mainFrame)
-title.Size = UDim2.new(1, 0, 0, 25)
-title.BackgroundTransparency = 1
-title.Text = "🌌 PlayerXGalaxy Compact"
-title.TextColor3 = Color3.fromRGB(200, 200, 200)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 16
-
--- ปุ่มเปิด/ปิด UI
-local toggleBtn = Instance.new("TextButton", screenGui)
-toggleBtn.Position = UDim2.new(0, 10, 0, 10) -- มุมซ้ายบน
-toggleBtn.Size = UDim2.new(0, 80, 0, 25)
-toggleBtn.Text = "Hide UI"
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextSize = 14
-toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-toggleBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
-toggleBtn.AutoButtonColor = true
-
-local uiVisible = true
-toggleBtn.MouseButton1Click:Connect(function()
-    uiVisible = not uiVisible
-    mainFrame.Visible = uiVisible
-    if uiVisible then
-        toggleBtn.Text = "Hide UI"
-    else
-        toggleBtn.Text = "Show UI"
+-- Anti-AFK (สลับคลิกซ้ายขวา เว้นเวลารอสุ่ม)
+local toggleClick = true
+spawn(function()
+    while true do
+        wait(math.random(50, 70))
+        VirtualUser:CaptureController()
+        if toggleClick then
+            VirtualUser:ClickButton1(Vector2.new())
+        else
+            VirtualUser:ClickButton2(Vector2.new())
+        end
+        toggleClick = not toggleClick
     end
 end)
 
--- รายการข้อมูล
-local seedList = {
-    "Feijoa", "Banana", "Avocado", "Green Apple", "Watermelon", "Cauliflower",
-    "Loquat", "Prickly Pear", "Bell Pepper", "Kiwi", "Pineapple", "Sugar Apple"
-}
-local gearList = {
-    "Watering Can", "Basic Sprinkler", "Advanced Sprinkler",
-    "Master Sprinkler", "Tanning Mirror", "Godly Sprinkler"
-}
-local eggList = {
-    "Common Egg", "Uncommon Egg", "Rare Egg", "Night Egg",
-    "Rare Summer Egg", "Common Summer Egg", "Paradise Summer Egg",
-    "Legendary Egg", "Bug Egg", "Mythical Egg"
-}
+player.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton1(Vector2.new())
+end)
 
-local function createDropdown(parent, posY, labelText, itemList, onSelect)
-    local dropdown = Instance.new("TextButton", parent)
-    dropdown.Position = UDim2.new(0.05, 0, posY, 0)
-    dropdown.Size = UDim2.new(0.9, 0, 0, 25)
-    dropdown.Text = labelText .. ": " .. itemList[1]
-    dropdown.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    dropdown.TextColor3 = Color3.fromRGB(220, 220, 220)
-    dropdown.Font = Enum.Font.Gotham
-    dropdown.TextSize = 14
+-- สร้าง ScreenGui
+local screenGui = Instance.new("ScreenGui", playerGui)
+screenGui.Name = "AutoBuyGui"
 
-    local toggle = false
-    local selectedItem = itemList[1]
+-- สร้าง Frame หลัก
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 280, 0, 230)
+frame.Position = UDim2.new(0, 20, 0, 20)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
+frame.AnchorPoint = Vector2.new(0,0)
+frame.ClipsDescendants = true
 
-    dropdown.MouseButton1Click:Connect(function()
-        toggle = not toggle
-        if toggle then
-            for i, item in ipairs(itemList) do
-                local btn = Instance.new("TextButton", parent)
-                btn.Position = UDim2.new(0.05, 0, posY + (i * 0.07), 0)
-                btn.Size = UDim2.new(0.9, 0, 0, 20)
-                btn.Text = item
-                btn.Name = labelText .. "_Item_" .. i
-                btn.BackgroundColor3 = Color3.fromRGB(65, 65, 65)
-                btn.TextColor3 = Color3.fromRGB(220, 220, 220)
-                btn.Font = Enum.Font.Gotham
-                btn.TextSize = 13
-                btn.MouseButton1Click:Connect(function()
-                    selectedItem = item
-                    dropdown.Text = labelText .. ": " .. item
-                    for _, c in ipairs(parent:GetChildren()) do
-                        if c.Name:match("^" .. labelText .. "_Item_%d+") then
-                            c:Destroy()
-                        end
-                    end
-                    toggle = false
-                    onSelect(item)
-                end)
-            end
+-- Shadow Effect (เบื้องหลัง)
+local shadow = Instance.new("Frame", frame)
+shadow.Size = UDim2.new(1, 10, 1, 10)
+shadow.Position = UDim2.new(0, -5, 0, -5)
+shadow.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+shadow.BorderSizePixel = 0
+shadow.ZIndex = 0
+shadow.AnchorPoint = Vector2.new(0, 0)
+shadow.BackgroundTransparency = 0.7
+shadow.Name = "Shadow"
+
+local function roundify(guiObject, radius)
+    local corner = Instance.new("UICorner", guiObject)
+    corner.CornerRadius = UDim.new(0, radius)
+end
+roundify(frame, 14)
+roundify(shadow, 14)
+
+-- ชื่อหัวข้อ
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 45)
+title.BackgroundTransparency = 1
+title.Text = "🔥 PlayerX Galaxy Auto Buy 🔥"
+title.TextColor3 = Color3.fromRGB(255, 180, 0)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 26
+title.RichText = true
+title.AnchorPoint = Vector2.new(0.5, 0)
+title.Position = UDim2.new(0.5, 0, 0, 7)
+title.TextStrokeColor3 = Color3.new(0,0,0)
+title.TextStrokeTransparency = 0.5
+
+-- ฟังก์ชันสร้างปุ่มเท่ๆ พร้อมสถานะเปิด/ปิด และ glow effect
+local function createCoolButton(parent, text, posY)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -40, 0, 45)
+    btn.Position = UDim2.new(0, 20, 0, posY)
+    btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    btn.BorderSizePixel = 0
+    btn.Text = text
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 22
+    btn.TextColor3 = Color3.fromRGB(255, 170, 50)
+    btn.AutoButtonColor = false
+    btn.Parent = parent
+    btn.ClipsDescendants = true
+
+    -- มุมโค้ง
+    local uicorner = Instance.new("UICorner", btn)
+    uicorner.CornerRadius = UDim.new(0, 10)
+
+    -- เงาเรืองแสง (Glow) รอบปุ่ม
+    local glow = Instance.new("ImageLabel", btn)
+    glow.Size = UDim2.new(1.4, 0, 1.4, 0)
+    glow.Position = UDim2.new(-0.2, 0, -0.2, 0)
+    glow.BackgroundTransparency = 1
+    glow.Image = "rbxassetid://3570695787" -- circle gradient blur
+    glow.ImageColor3 = Color3.fromRGB(255, 140, 0)
+    glow.ImageTransparency = 0.85
+    glow.ZIndex = btn.ZIndex - 1
+
+    -- สถานะเปิด/ปิด
+    btn._active = false
+    function btn:SetActive(active)
+        btn._active = active
+        if active then
+            TweenService:Create(btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(255, 140, 0), TextColor3 = Color3.new(0,0,0)}):Play()
+            TweenService:Create(glow, TweenInfo.new(0.3), {ImageTransparency = 0.3}):Play()
         else
-            for _, c in ipairs(parent:GetChildren()) do
-                if c.Name:match("^" .. labelText .. "_Item_%d+") then
-                    c:Destroy()
-                end
-            end
+            TweenService:Create(btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(35, 35, 35), TextColor3 = Color3.fromRGB(255, 170, 50)}):Play()
+            TweenService:Create(glow, TweenInfo.new(0.3), {ImageTransparency = 0.85}):Play()
+        end
+    end
+
+    -- เอฟเฟกต์ hover เฉพาะเมื่อปิดอยู่
+    btn.MouseEnter:Connect(function()
+        if not btn._active then
+            TweenService:Create(btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(255, 140, 0), TextColor3 = Color3.new(0,0,0)}):Play()
+            TweenService:Create(glow, TweenInfo.new(0.3), {ImageTransparency = 0.3}):Play()
+        end
+    end)
+    btn.MouseLeave:Connect(function()
+        if not btn._active then
+            TweenService:Create(btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(35, 35, 35), TextColor3 = Color3.fromRGB(255, 170, 50)}):Play()
+            TweenService:Create(glow, TweenInfo.new(0.3), {ImageTransparency = 0.85}):Play()
         end
     end)
 
-    return dropdown, function() return selectedItem end
+    -- เริ่มต้นสถานะปิด
+    btn:SetActive(false)
+
+    return btn
 end
 
--- ตัวแปรเก็บค่าเลือก และสถานะ Auto
-local selectedSeed = seedList[1]
-local selectedGear = gearList[1]
-local selectedEgg = eggList[1]
+local btnSeeds = createCoolButton(frame, "Start Auto Buy Seeds", 65)
+local btnGears = createCoolButton(frame, "Start Auto Buy Gears", 120)
+local btnEggs = createCoolButton(frame, "Start Auto Buy Pet Eggs", 175)
 
-local autoSeed = false
-local autoGear = false
-local autoEgg = false
+local toggleUiBtn = Instance.new("TextButton", screenGui)
+toggleUiBtn.Size = UDim2.new(0, 120, 0, 35)
+toggleUiBtn.Position = UDim2.new(0, 20, 0, 265)
+toggleUiBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+toggleUiBtn.TextColor3 = Color3.fromRGB(255, 170, 50)
+toggleUiBtn.Font = Enum.Font.GothamBold
+toggleUiBtn.TextSize = 20
+toggleUiBtn.Text = "Hide UI"
+toggleUiBtn.AutoButtonColor = false
+roundify(toggleUiBtn, 10)
 
--- สร้าง Dropdown
-local seedDropdown, _ = createDropdown(mainFrame, 0.12, "Seed", seedList, function(val) selectedSeed = val end)
-local gearDropdown, _ = createDropdown(mainFrame, 0.38, "Gear", gearList, function(val) selectedGear = val end)
-local eggDropdown, _ = createDropdown(mainFrame, 0.64, "Egg", eggList, function(val) selectedEgg = val end)
-
--- ปุ่ม Auto Seed
-local seedBtn = Instance.new("TextButton", mainFrame)
-seedBtn.Position = UDim2.new(0.05, 0, 0.30, 0)
-seedBtn.Size = UDim2.new(0.9, 0, 0, 25)
-seedBtn.Text = "✅ Auto Seed OFF"
-seedBtn.Font = Enum.Font.Gotham
-seedBtn.TextSize = 14
-seedBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 40)
-seedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-seedBtn.MouseButton1Click:Connect(function()
-    autoSeed = not autoSeed
-    seedBtn.Text = autoSeed and "🛑 Auto Seed ON" or "✅ Auto Seed OFF"
+toggleUiBtn.MouseEnter:Connect(function()
+    TweenService:Create(toggleUiBtn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(255, 140, 0), TextColor3 = Color3.new(0,0,0)}):Play()
+end)
+toggleUiBtn.MouseLeave:Connect(function()
+    TweenService:Create(toggleUiBtn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(35, 35, 35), TextColor3 = Color3.fromRGB(255, 170, 50)}):Play()
 end)
 
--- ปุ่ม Auto Gear
-local gearBtn = Instance.new("TextButton", mainFrame)
-gearBtn.Position = UDim2.new(0.05, 0, 0.56, 0)
-gearBtn.Size = UDim2.new(0.9, 0, 0, 25)
-gearBtn.Text = "✅ Auto Gear OFF"
-gearBtn.Font = Enum.Font.Gotham
-gearBtn.TextSize = 14
-gearBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 40)
-gearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-gearBtn.MouseButton1Click:Connect(function()
-    autoGear = not autoGear
-    gearBtn.Text = autoGear and "🛑 Auto Gear ON" or "✅ Auto Gear OFF"
-end)
+-- ข้อมูลซื้อ
+local gears = {
+    "Watering Can",
+    "Basic Sprinkler",
+    "Advanced Sprinkler",
+    "Godly Sprinkler",
+    "Tanning Mirror",
+    "Master Sprinkler",
+    "Friendship Pot"
+}
 
--- ปุ่ม Auto Egg
-local eggBtn = Instance.new("TextButton", mainFrame)
-eggBtn.Position = UDim2.new(0.05, 0, 0.82, 0)
-eggBtn.Size = UDim2.new(0.9, 0, 0, 25)
-eggBtn.Text = "✅ Auto Egg OFF"
-eggBtn.Font = Enum.Font.Gotham
-eggBtn.TextSize = 14
-eggBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 40)
-eggBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-eggBtn.MouseButton1Click:Connect(function()
-    autoEgg = not autoEgg
-    eggBtn.Text = autoEgg and "🛑 Auto Egg ON" or "✅ Auto Egg OFF"
-end)
+local seeds = {
+    "Feijoa",
+    "Banana",
+    "Avocado",
+    "Green Apple",
+    "Watermelon",
+    "Cauliflower",
+    "Loquat",
+    "Prickly Pear",
+    "Bell Pepper",
+    "Kiwi",
+    "Pineapple",
+    "Sugar Apple"
+}
 
--- ระบบลากหน้าต่างแบบละเอียด รองรับเมาส์และมือถือ
-local dragging = false
-local dragInput, dragStart, startPos
+local petEggIndexes = {1, 2, 3}
 
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
+local gameEvents = ReplicatedStorage:WaitForChild("GameEvents")
+local buyGearStock = gameEvents:WaitForChild("BuyGearStock")
+local buySeedStock = gameEvents:WaitForChild("BuySeedStock")
+local buyPetEgg = gameEvents:WaitForChild("BuyPetEgg")
 
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
+local states = {
+    seeds = false,
+    gears = false,
+    eggs = false
+}
+
+local function autoBuyLoop(list, event, isIndex)
+    while states[event] do
+        for _, item in ipairs(list) do
+            if isIndex then
+                event:FireServer(item)
+            else
+                event:FireServer(tostring(item))
             end
-        end)
+            wait(0.5)
+            if not states[event] then break end
+        end
+        wait(5)
+    end
+end
+
+btnSeeds.MouseButton1Click:Connect(function()
+    states.seeds = not states.seeds
+    btnSeeds.Text = states.seeds and "Stop Auto Buy Seeds" or "Start Auto Buy Seeds"
+    btnSeeds:SetActive(states.seeds)
+    if states.seeds then
+        spawn(function() autoBuyLoop(seeds, buySeedStock, false) end)
     end
 end)
 
-mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
+btnGears.MouseButton1Click:Connect(function()
+    states.gears = not states.gears
+    btnGears.Text = states.gears and "Stop Auto Buy Gears" or "Start Auto Buy Gears"
+    btnGears:SetActive(states.gears)
+    if states.gears then
+        spawn(function() autoBuyLoop(gears, buyGearStock, false) end)
     end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
+btnEggs.MouseButton1Click:Connect(function()
+    states.eggs = not states.eggs
+    btnEggs.Text = states.eggs and "Stop Auto Buy Pet Eggs" or "Start Auto Buy Pet Eggs"
+    btnEggs:SetActive(states.eggs)
+    if states.eggs then
+        spawn(function() autoBuyLoop(petEggIndexes, buyPetEgg, true) end)
+    end
+end)
+
+local uiVisible = true
+toggleUiBtn.MouseButton1Click:Connect(function()
+    uiVisible = not uiVisible
+    frame.Visible = uiVisible
+    toggleUiBtn.Text = uiVisible and "Hide UI" or "Show UI"
+end)
+
+-- ฟังก์ชันทำให้ Frame ขยับได้โดยลากเมาส์ (ลากจาก title)
+local function makeDraggable(guiObject, dragArea)
+    local dragging = false
+    local dragInput
+    local dragStart
+    local startPos
+
+    local function update(input)
         local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(
+        guiObject.Position = UDim2.new(
             startPos.X.Scale,
             startPos.X.Offset + delta.X,
             startPos.Y.Scale,
             startPos.Y.Offset + delta.Y
         )
     end
-end)
 
--- Loop ซื้ออัตโนมัติ
-task.spawn(function()
-    while true do
-        if autoSeed then
-            ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("BuySeedStock"):FireServer(selectedSeed)
+    dragArea.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = guiObject.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
         end
-        if autoGear then
-            ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("BuyGearStock"):FireServer(selectedGear)
+    end)
+
+    dragArea.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
         end
-        if autoEgg then
-            ReplicatedStorage:WaitForChild("GameEvents"):WaitForChild("BuyEggStock"):FireServer(selectedEgg)
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
         end
-        wait(1)
-    end
-end)
+    end)
+end
+
+makeDraggable(frame, title)
